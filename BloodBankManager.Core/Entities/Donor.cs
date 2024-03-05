@@ -1,6 +1,5 @@
 ﻿using BloodBankManager.Core.Entities;
 using BloodBankManager.Core.Enums;
-using System.Reflection;
 
 namespace BloodBankManager.Core.Donor;
 
