@@ -1,6 +1,8 @@
 using BloodBankManager.Application.InputModels;
+using BloodBankManager.Application.Services;
 using BloodBankManager.Application.ViewModels;
 using BloodBankManager.Core.Donor;
+using BloodBankManager.Core.Entities;
 using BloodBankManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +21,13 @@ public class DonationsController : ControllerBase
     // 6. add last 30 days donations
 
     private readonly BloodManagementDbContext _dbContext;
-    public DonationsController(BloodManagementDbContext dbContext)
+    private readonly BloodStorageService _storageService;
+    public DonationsController(
+        BloodManagementDbContext dbContext,
+        BloodStorageService storageService)
     {
         _dbContext = dbContext;
+        _storageService = storageService;
     }
 
     [HttpGet]
@@ -69,14 +75,21 @@ public class DonationsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<DonationViewModel>> CreateDonation([FromBody] CreateDonationInputModel donationInputModel)
+    public async Task<ActionResult> CreateDonation([FromBody] CreateDonationInputModel donationInputModel)
     {
+        var donor = await _dbContext.Donors.SingleOrDefaultAsync(d => d.Id == donationInputModel.DonorId);
+
+        if (donor == null) NotFound();
+
         var donation = new Donation(
                        donationInputModel.DonorId,
                        donationInputModel.DonationDate,
                        donationInputModel.QuantityMl);
 
         _dbContext.Donations.Add(donation);
+
+        await _storageService.AddBloodStorage(donationInputModel.DonorId, donationInputModel.QuantityMl);
+
         await _dbContext.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetDonationById), new { id = donation.Id }, donation);

@@ -13,8 +13,7 @@ public class DonorsController : ControllerBase
 {
     //private readonly IMediator _mediator;
     private readonly BloodManagementDbContext _dbContext;
-    public DonorsController(IMediator mediator,
-        BloodManagementDbContext dbContext)
+    public DonorsController(BloodManagementDbContext dbContext)
     {
         _dbContext = dbContext;
         //_mediator = mediator;
@@ -38,7 +37,6 @@ public class DonorsController : ControllerBase
             Weight = donor.Weight,
             BloodType = donor.BloodType,
             RhFactor = donor.RhFactor,
-            Address = donor.Address,
             Active = donor.Active
         }).ToList();
 
@@ -46,7 +44,7 @@ public class DonorsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<DonorViewModel>> GetDonorById(int id)
+    public async Task<ActionResult<DonorByIdViewModel>> GetDonorById(int id)
     {
         var donor = await _dbContext.Donors.SingleOrDefaultAsync(d => d.Id == id);
 
@@ -55,17 +53,26 @@ public class DonorsController : ControllerBase
             return NotFound();
         }
 
-        var donorViewModel = new DonorViewModel
+        var donorByIdViewModel = new DonorByIdViewModel
         {
             Id = donor.Id,
             FullName = donor.FullName,
+            Email = donor.Email,
+            BirthDate = donor.BirthDate,
+            Gender = donor.Gender,
+            Weight = donor.Weight,
+            BloodType = donor.BloodType,
+            RhFactor = donor.RhFactor,
+            Donations = donor.Donations,
+            Address = donor.Address,
+            Active = donor.Active
         };
 
-        return donorViewModel;
+        return donorByIdViewModel;
     }
 
     [HttpPost]
-    public async Task<ActionResult<DonorViewModel>> CreateDonor([FromBody] CreateDonorInputModel donorInputModel)
+    public async Task<IActionResult> CreateDonor([FromBody] CreateDonorInputModel donorInputModel)
     {
         var donor = new Donor(
             donorInputModel.FullName,

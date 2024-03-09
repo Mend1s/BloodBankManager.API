@@ -1,3 +1,5 @@
+using BloodBankManager.Application.Services;
+using BloodBankManager.Core.Services;
 using BloodBankManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +12,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<BloodManagementDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("BloodManagement")));
+
+builder.Services.AddScoped<IBloodStorageService, BloodStorageService>();
 
 var app = builder.Build();
 

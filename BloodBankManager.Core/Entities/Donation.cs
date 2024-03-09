@@ -4,7 +4,7 @@ namespace BloodBankManager.Core.Donor;
 
 public class Donation : BaseEntity
 {
-    public Donation(int donorId,DateTime donationDate, int quantityMl)
+    public Donation(int donorId, DateTime donationDate, int quantityMl)
     {
         DonorId = donorId;
         DonationDate = donationDate;

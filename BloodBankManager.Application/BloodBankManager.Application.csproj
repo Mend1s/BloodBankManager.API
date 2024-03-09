@@ -8,10 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BloodBankManager.Core\BloodBankManager.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\Implementations\" />
+    <ProjectReference Include="..\BloodBankManager.Infrastructure\BloodBankManager.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
