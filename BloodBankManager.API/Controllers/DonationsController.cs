@@ -2,7 +2,7 @@ using BloodBankManager.Application.InputModels;
 using BloodBankManager.Application.Services;
 using BloodBankManager.Application.ViewModels;
 using BloodBankManager.Core.Donor;
-using BloodBankManager.Core.Entities;
+using BloodBankManager.Core.Services;
 using BloodBankManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,10 +21,10 @@ public class DonationsController : ControllerBase
     // 6. add last 30 days donations
 
     private readonly BloodManagementDbContext _dbContext;
-    private readonly BloodStorageService _storageService;
+    private readonly IBloodStorageService _storageService;
     public DonationsController(
         BloodManagementDbContext dbContext,
-        BloodStorageService storageService)
+        IBloodStorageService storageService)
     {
         _dbContext = dbContext;
         _storageService = storageService;

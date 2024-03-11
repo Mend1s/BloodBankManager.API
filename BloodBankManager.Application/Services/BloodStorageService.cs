@@ -1,36 +1,34 @@
-﻿using BloodBankManager.Core.Entities;
-using BloodBankManager.Core.Services;
+﻿using BloodBankManager.Core.Services;
 using BloodBankManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace BloodBankManager.Application.Services
+namespace BloodBankManager.Application.Services;
+
+public class BloodStorageService : IBloodStorageService
 {
-    public class BloodStorageService : IBloodStorageService
+    private readonly BloodManagementDbContext _dbContext;
+    public BloodStorageService(BloodManagementDbContext dbContext)
     {
-        private readonly BloodManagementDbContext _dbContext;
-        public BloodStorageService(BloodManagementDbContext dbContext)
+        _dbContext = dbContext;
+    }
+
+    public async Task AddBloodStorage(int donorId, int quantityML)
+    {
+        var donor = await _dbContext.Donors.SingleOrDefaultAsync(d => d.Id == donorId);
+
+        if (donor == null)
         {
-            _dbContext = dbContext;
+            throw new Exception("Donor não encontrado, tente novamente!");
         }
 
-        public async Task AddBloodStorage(int donorId, int quantityML)
-        {
-            var donor = await _dbContext.Donors.SingleOrDefaultAsync(d => d.Id == donorId);
+        var storage = await _dbContext.BloodStorage
+            .SingleOrDefaultAsync
+            (s => s.BloodType == donor.BloodType && s.RhFactor == donor.RhFactor);
 
-            if (donor == null)
-            {
-                throw new Exception("Donor não encontrado, tente novamente!");
-            }
+        storage.UpdateQuantityStorage(quantityML);
 
-            var storage = await _dbContext.BloodStorage
-                .SingleOrDefaultAsync
-                (s => s.BloodType == donor.BloodType && s.RhFactor == donor.RhFactor);
+        _dbContext.BloodStorage.Update(storage);
 
-            storage.UpdateQuantityStorage(quantityML);
-
-            _dbContext.BloodStorage.Update(storage);
-
-            _dbContext.SaveChanges();
-        }
+        _dbContext.SaveChanges();
     }
 }

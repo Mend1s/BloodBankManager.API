@@ -10,10 +10,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<IBloodStorageService, BloodStorageService>();
+
 builder.Services.AddDbContext<BloodManagementDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("BloodManagement")));
-
-builder.Services.AddScoped<IBloodStorageService, BloodStorageService>();
 
 var app = builder.Build();
 
