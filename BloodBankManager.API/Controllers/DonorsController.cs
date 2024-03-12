@@ -46,7 +46,9 @@ public class DonorsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<DonorByIdViewModel>> GetDonorById(int id)
     {
-        var donor = await _dbContext.Donors.SingleOrDefaultAsync(d => d.Id == id);
+        var donor = await _dbContext.Donors
+            .Include(d => d.Donations)
+            . SingleOrDefaultAsync(d => d.Id == id);
 
         if (donor == null)
         {

@@ -33,29 +33,31 @@ public class DonationsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<DonationViewModel>> GetAllDonations()
     {
-        var donations = await _dbContext.Donations.ToListAsync();
-
+        var donations = await _dbContext.Donations.Include(d => d.Donor).ToListAsync();
+            
         if (donations == null)
         {
             return NotFound();
         }
 
-        var donationsViewModel = donations.Select(donation => new DonationViewModel
-        {
-            Id = donation.Id,
-            DonorId = donation.DonorId,
-            DonationDate = donation.DonationDate,
-            QuantityMl = donation.QuantityMl,
-            Donor = donation.Donor
-        }).ToList();
+        //var donationsViewModel = donations.Select(donation => new DonationViewModel
+        //{
+        //    Id = donation.Id,
+        //    DonorId = donation.DonorId,
+        //    DonationDate = donation.DonationDate,
+        //    QuantityMl = donation.QuantityMl,
+        //    Donor = donation.Donor
+        //}).ToList();
 
-        return Ok(donationsViewModel);
+        return Ok(donations);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<DonationViewModel>> GetDonationById(int id)
     {
-        var donation = await _dbContext.Donations.SingleOrDefaultAsync(d => d.Id == id);
+        var donation = await _dbContext.Donations
+            .Include(d => d.Donor)
+            .SingleOrDefaultAsync(d => d.Id == id);
 
         if (donation == null)
         {

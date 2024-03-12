@@ -1,4 +1,5 @@
-﻿using BloodBankManager.Core.Services;
+﻿using BloodBankManager.Core.Enums;
+using BloodBankManager.Core.Services;
 using BloodBankManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
