@@ -15,10 +15,12 @@ builder.Services.AddControllers().AddJsonOptions(x =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(
+    options.AddPolicy(name: "MyPolicy",
         policy =>
         {
-            policy.WithOrigins("http://localhost:4200");
+            policy.WithOrigins("http://localhost:4200")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
         });
 });
 
@@ -33,7 +35,7 @@ builder.Services.AddDbContext<BloodManagementDbContext>(options =>
 
 var app = builder.Build();
 
-app.UseCors();
+app.UseCors("MyPolicy");
 
 if (app.Environment.IsDevelopment())
 {
