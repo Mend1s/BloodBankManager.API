@@ -1,3 +1,4 @@
+using BloodBankManager.API.Filters;
 using BloodBankManager.Application.Services.Implementations;
 using BloodBankManager.Application.Services.Interfaces;
 using BloodBankManager.Application.Validators;
@@ -10,7 +11,7 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(options => options.Filters.Add(typeof(ValidationFilter)))
     .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CreateDonorValidator>())
     .AddJsonOptions(x =>
    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);

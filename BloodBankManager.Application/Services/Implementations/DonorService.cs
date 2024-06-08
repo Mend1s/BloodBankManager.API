@@ -26,6 +26,8 @@ public class DonorService : IDonorService
             donorInputModel.RhFactor,
             donorInputModel.Address);
 
+        if (ExistsByEmail(donorInputModel.Email)) throw new Exception("Esse e-mail já está cadastrado.");
+
         await _dbContext.Donors.AddAsync(donor);
 
         await _dbContext.SaveChangesAsync();
@@ -122,5 +124,10 @@ public class DonorService : IDonorService
         await _dbContext.SaveChangesAsync();
 
         return donor;
+    }
+
+    private bool ExistsByEmail(string email)
+    {
+        return _dbContext.Donors.Any(d => d.Email == email);
     }
 }

@@ -24,10 +24,20 @@ public class DonationService : IDonationService
 
         if (donor == null) throw new Exception("Doador não encontrado.");
 
+        if (!donor.Active) throw new Exception("Doador com cadastro inativo, por favor reativar.");
+
+        var donorCheck = donor.CheckDonor(donor);
+
+        if (!donorCheck) throw new Exception("Doador não pode doar sangue.");
+
         var donation = new Donation(
                        donationInputModel.DonorId,
                        donationInputModel.DonationDate,
                        donationInputModel.QuantityMl);
+
+        var donationCheck = donation.CheckMilimiterToDonation(donationInputModel.QuantityMl);
+
+        if (!donationCheck) throw new Exception("Quantidade de sangue doada não permitida.");
 
         _dbContext.Donations.Add(donation);
 

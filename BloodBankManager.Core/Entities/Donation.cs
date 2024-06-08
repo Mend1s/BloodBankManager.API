@@ -16,9 +16,24 @@ public class Donation : BaseEntity
     public int QuantityMl { get; private set; }
     public Donor Donor { get; private set; }
 
+    private const int MinimumMl = 420;
+    private const int MaximumMl = 470;
+
     public void UpdateDonation(int donorId, int quantityMl)
     {
         DonorId = donorId;
         QuantityMl = quantityMl;
+    }
+
+    public bool CheckMilimiterToDonation(int quantityMl)
+    {
+        if (quantityMl <= MinimumMl || quantityMl > MaximumMl)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 }
