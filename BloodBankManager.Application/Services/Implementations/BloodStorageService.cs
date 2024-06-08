@@ -1,5 +1,7 @@
 ﻿using BloodBankManager.Application.Services.Interfaces;
 using BloodBankManager.Application.ViewModels;
+using BloodBankManager.Core.Enums;
+using BloodBankManager.Infrastructure.EmailConfig;
 using BloodBankManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,8 +10,12 @@ namespace BloodBankManager.Application.Services.Implementations;
 public class BloodStorageService : IBloodStorageService
 {
     private readonly BloodManagementDbContext _dbContext;
-    public BloodStorageService(BloodManagementDbContext dbContext)
+    private readonly IEmailService _emailService;
+    public BloodStorageService(
+        BloodManagementDbContext dbContext,
+        IEmailService emailService)
     {
+        _emailService = emailService;
         _dbContext = dbContext;
     }
 
@@ -51,6 +57,8 @@ public class BloodStorageService : IBloodStorageService
     {
         var bloodStorage = await _dbContext.BloodStorage.SingleOrDefaultAsync(b => b.Id == id);
 
+        await CheckAndNotifyLowStock(bloodStorage.BloodType, bloodStorage.QuantityMl);
+
         if (bloodStorage == null) throw new Exception("Estoque não encontrado.");
 
         var bloodStorageViewModel = new BloodStorageViewModel
@@ -60,7 +68,22 @@ public class BloodStorageService : IBloodStorageService
             RhFactor = bloodStorage.RhFactor,
             QuantityMl = bloodStorage.QuantityMl
         };
-
         return bloodStorageViewModel;
+    }
+
+    public async Task CheckAndNotifyLowStock(BloodTypeEnum bloodType, int currentQuantity)
+    {
+        if (currentQuantity < GetMinimumQuantity(bloodType))
+        {
+            string subject = $"Aviso: Estoque Baixo de Sangue {bloodType}";
+            string body = $"O estoque de sangue do tipo {bloodType} está baixo. Restam apenas {currentQuantity} unidades.";
+
+            _emailService.SendEmailAsync("", subject, body);
+        }
+    }
+
+    private int GetMinimumQuantity(BloodTypeEnum bloodType)
+    {
+        return 100;
     }
 }

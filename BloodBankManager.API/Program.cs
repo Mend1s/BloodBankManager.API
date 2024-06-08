@@ -2,6 +2,7 @@ using BloodBankManager.API.Filters;
 using BloodBankManager.Application.Services.Implementations;
 using BloodBankManager.Application.Services.Interfaces;
 using BloodBankManager.Application.Validators;
+using BloodBankManager.Infrastructure.EmailConfig;
 using BloodBankManager.Infrastructure.Persistence;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddScoped<IBloodStorageService, BloodStorageService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IDonorService, DonorService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddDbContext<BloodManagementDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("BloodManagement")));
