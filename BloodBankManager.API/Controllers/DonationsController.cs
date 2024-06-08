@@ -1,99 +1,86 @@
 using BloodBankManager.Application.InputModels;
-using BloodBankManager.Application.Services;
+using BloodBankManager.Application.Services.Interfaces;
 using BloodBankManager.Application.ViewModels;
-using BloodBankManager.Core.Donor;
-using BloodBankManager.Core.Services;
-using BloodBankManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BloodBankManager.API.Controllers;
 
 [Route("api/[controller]")]
 public class DonationsController : ControllerBase
 {
-    // TODO
-    // 1. add dbcontext - feito
-    // 2. add get all donations - feito
-    // 3. add get donation by id - feito
-    // 4. add post donation - feito
-    // 5. add validation - adicionar depois de finalizar os crud's
-    // 6. add last 30 days donations
-
-    private readonly BloodManagementDbContext _dbContext;
-    private readonly IBloodStorageService _storageService;
+    private readonly IDonationService _donationService;
     public DonationsController(
-        BloodManagementDbContext dbContext,
-        IBloodStorageService storageService)
+        IDonationService donationService)
     {
-        _dbContext = dbContext;
-        _storageService = storageService;
+        _donationService = donationService;
     }
 
+
+    /// <summary>
+    /// Obtém todas as doações registradas.
+    /// </summary>
+    /// <returns>Uma lista de doações.</returns>
     [HttpGet]
     public async Task<ActionResult<DonationViewModel>> GetAllDonations()
     {
-        var donations = await _dbContext.Donations.Include(d => d.Donor).ToListAsync();
-            
-        if (donations == null)
+        try
         {
-            return NotFound();
+            return Ok(await _donationService.GetAllDonations());
         }
-
-        //var donationsViewModel = donations.Select(donation => new DonationViewModel
-        //{
-        //    Id = donation.Id,
-        //    DonorId = donation.DonorId,
-        //    DonationDate = donation.DonationDate,
-        //    QuantityMl = donation.QuantityMl,
-        //    Donor = donation.Donor
-        //}).ToList();
-
-        return Ok(donations);
+        catch (Exception ex)
+        {
+            return BadRequest(error: $"[GetAllDonations] : {ex.Message}");
+        }
     }
 
+    /// <summary>
+    /// Obtém uma doação pelo ID.
+    /// </summary>
+    /// <param name="id">O ID da doação a ser obtida.</param>
+    /// <returns>A doação solicitada.</returns>
     [HttpGet("{id}")]
     public async Task<ActionResult<DonationViewModel>> GetDonationById(int id)
     {
-        var donation = await _dbContext.Donations
-            .Include(d => d.Donor)
-            .SingleOrDefaultAsync(d => d.Id == id);
-
-        if (donation == null)
+        try
         {
-            return NotFound();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            return Ok(await _donationService.GetDonationById(id));
         }
-
-        var donationViewModel = new DonationViewModel
+        catch (Exception ex)
         {
-            Id = donation.Id,
-            DonorId = donation.DonorId,
-            DonationDate = donation.DonationDate,
-            QuantityMl = donation.QuantityMl,
-            Donor = donation.Donor
-        };
-
-        return Ok(donationViewModel);
+            return BadRequest(error: $"[GetDonationById] : {ex.Message}");
+        }
     }
 
+    /// <summary>
+    /// Cria uma nova doação.
+    /// </summary>
+    /// <param name="donationInputModel">Os detalhes da doação a ser criada.</param>
+    /// <returns>A doação criada.</returns>
     [HttpPost]
-    public async Task<ActionResult> CreateDonation([FromBody] CreateDonationInputModel donationInputModel)
+    public async Task<IActionResult> CreateDonation([FromBody] CreateDonationInputModel donationInputModel)
     {
-        var donor = await _dbContext.Donors.SingleOrDefaultAsync(d => d.Id == donationInputModel.DonorId);
+        try
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (donor == null) NotFound();
+            var donation = await _donationService.CreateDonation(donationInputModel);
 
-        var donation = new Donation(
-                       donationInputModel.DonorId,
-                       donationInputModel.DonationDate,
-                       donationInputModel.QuantityMl);
+            var donationViewModel = new DonationViewModel
+            {
+                Id = donation.Id,
+                DonorId = donation.DonorId,
+                DonationDate = donation.DonationDate,
+                QuantityMl = donation.QuantityMl,
+            };
 
-        _dbContext.Donations.Add(donation);
+            return CreatedAtAction(nameof(GetDonationById), new { id = donationViewModel.Id}, donationViewModel);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(error: $"[CreateDonation] : {ex.Message}");
+        }
 
-        await _storageService.AddBloodStorage(donationInputModel.DonorId, donationInputModel.QuantityMl);
-
-        await _dbContext.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetDonationById), new { id = donation.Id }, donation);
     }
 }

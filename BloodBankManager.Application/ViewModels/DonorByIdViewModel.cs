@@ -13,7 +13,7 @@ public class DonorByIdViewModel
     public double Weight { get; set; }
     public BloodTypeEnum BloodType { get; set; }
     public RhFactorEnum RhFactor { get; set; }
-    public List<Donation> Donations { get; set; }
+    public List<DonationViewModel> Donations { get; set; }
     public Address? Address { get; set; }
     public bool Active { get; set; }
 }

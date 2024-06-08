@@ -1,58 +1,53 @@
-﻿using BloodBankManager.Application.ViewModels;
-using BloodBankManager.Infrastructure.Persistence;
+﻿using BloodBankManager.Application.Services.Interfaces;
+using BloodBankManager.Application.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BloodBankManager.API.Controllers;
 
 [Route("api/[controller]")]
 public class BloodStorageController : ControllerBase
 {
-    private readonly BloodManagementDbContext _dbContext;
-    public BloodStorageController(BloodManagementDbContext dbContext)
+    private readonly IBloodStorageService _bloodStorageService;
+    public BloodStorageController(
+        IBloodStorageService bloodStorageService)
     {
-        _dbContext = dbContext;
+        _bloodStorageService = bloodStorageService;
     }
 
+    /// <summary>
+    /// Obtém todos os registros de armazenamento de sangue.
+    /// </summary>
+    /// <returns>Uma lista de registros de armazenamento de sangue.</returns>
     [HttpGet]
     public async Task<ActionResult<BloodStorageViewModel>> GetAllBloodStorage()
     {
-        var bloodStorage = await _dbContext.BloodStorage.ToListAsync();
-
-        if (bloodStorage == null)
+        try
         {
-            return NotFound();
+            return Ok(await _bloodStorageService.GetAllBloodStorage());
         }
-
-        var bloodStorageViewModel = bloodStorage.Select(bloodStorage => new BloodStorageViewModel
+        catch (Exception ex)
         {
-            Id = bloodStorage.Id,
-            BloodType = bloodStorage.BloodType,
-            RhFactor = bloodStorage.RhFactor,
-            QuantityMl = bloodStorage.QuantityMl
-        }).ToList();
-
-        return Ok(bloodStorageViewModel);
+            return BadRequest(error: $"[GetAllBloodStorage] : {ex.Message}");
+        }
     }
 
+    /// <summary>
+    /// Obtém um registro de armazenamento de sangue pelo ID.
+    /// </summary>
+    /// <param name="id">O ID do registro de armazenamento de sangue.</param>
+    /// <returns>O registro de armazenamento de sangue solicitado.</returns>
     [HttpGet("{id}")]
     public async Task<ActionResult<BloodStorageViewModel>> GetBloodStorageById(int id)
     {
-        var bloodStorage = await _dbContext.BloodStorage.SingleOrDefaultAsync(b => b.Id == id);
-
-        if (bloodStorage == null)
+        try
         {
-            return NotFound();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            return Ok( await _bloodStorageService.GetBloodStorageById(id));
         }
-
-        var bloodStorageViewModel = new BloodStorageViewModel
+        catch (Exception ex)
         {
-            Id = bloodStorage.Id,
-            BloodType = bloodStorage.BloodType,
-            RhFactor = bloodStorage.RhFactor,
-            QuantityMl = bloodStorage.QuantityMl
-        };
-
-        return Ok(bloodStorageViewModel);
+            return BadRequest(error: $"[GetBloodStorageById] : {ex.Message}");
+        }
     }
 }

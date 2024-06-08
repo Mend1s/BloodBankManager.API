@@ -1,133 +1,127 @@
 ﻿using BloodBankManager.Application.InputModels;
+using BloodBankManager.Application.Services.Interfaces;
 using BloodBankManager.Application.ViewModels;
-using BloodBankManager.Core.Donor;
-using BloodBankManager.Infrastructure.Persistence;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BloodBankManager.API.Controllers;
 
+[ApiController]
 [Route("api/[controller]")]
 public class DonorsController : ControllerBase
 {
-    //private readonly IMediator _mediator;
-    private readonly BloodManagementDbContext _dbContext;
-    public DonorsController(BloodManagementDbContext dbContext)
+    private readonly IDonorService _donorService;
+    public DonorsController(
+        IDonorService donorService)
     {
-        _dbContext = dbContext;
-        //_mediator = mediator;
+        _donorService = donorService;
     }
 
+    /// <summary>
+    /// Obtém todos os doadores.
+    /// </summary>
+    /// <returns>Uma lista de doadores.</returns>
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DonorViewModel>> GetAllDonors()
     {
-        var donors = await _dbContext.Donors.ToListAsync();
-
-        if (donors == null)
+        try
         {
-            return NotFound();
+            return Ok(await _donorService.GetAllDonors());
         }
-
-        var donorsViewModel = donors.Select(donor => new DonorViewModel
+        catch (Exception ex)
         {
-            Id = donor.Id,
-            FullName = donor.FullName,
-            Gender = donor.Gender,
-            Weight = donor.Weight,
-            BloodType = donor.BloodType,
-            RhFactor = donor.RhFactor,
-            Active = donor.Active
-        }).ToList();
-
-        return Ok(donorsViewModel);
+            return BadRequest(error: $"[GetAllDonors] : {ex.Message}");
+        }
     }
 
+    /// <summary>
+    /// Obtém um doador pelo ID.
+    /// </summary>
+    /// <param name="id">O ID do doador a ser obtido.</param>
+    /// <returns>O doador solicitado.</returns>
     [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DonorByIdViewModel>> GetDonorById(int id)
     {
-        var donor = await _dbContext.Donors
-            .Include(d => d.Donations)
-            . SingleOrDefaultAsync(d => d.Id == id);
-
-        if (donor == null)
+        try
         {
-            return NotFound();
+            return Ok(await _donorService.GetDonorById(id));
         }
-
-        var donorByIdViewModel = new DonorByIdViewModel
+        catch (Exception ex)
         {
-            Id = donor.Id,
-            FullName = donor.FullName,
-            Email = donor.Email,
-            BirthDate = donor.BirthDate,
-            Gender = donor.Gender,
-            Weight = donor.Weight,
-            BloodType = donor.BloodType,
-            RhFactor = donor.RhFactor,
-            Donations = donor.Donations,
-            Address = donor.Address,
-            Active = donor.Active
-        };
-
-        return donorByIdViewModel;
+            return BadRequest(error: $"[GetDonorById] : {ex.Message}");
+        }
     }
 
+    /// <summary>
+    /// Cria um novo doador.
+    /// </summary>
+    /// <param name="donorInputModel">Os detalhes do doador a ser criado.</param>
+    /// <returns>O doador criado.</returns>
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateDonor([FromBody] CreateDonorInputModel donorInputModel)
     {
-        var donor = new Donor(
-            donorInputModel.FullName,
-            donorInputModel.Email,
-            donorInputModel.BirthDate,
-            donorInputModel.Gender,
-            donorInputModel.Weight,
-            donorInputModel.BloodType,
-            donorInputModel.RhFactor,
-            donorInputModel.Address);
+        try
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        await _dbContext.Donors.AddAsync(donor);
+            var donor = await _donorService.CreateDonor(donorInputModel);
 
-        await _dbContext.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetDonorById), new { id = donor.Id }, donor);
+            return CreatedAtAction(nameof(GetDonorById), new { id = donor.Id }, donor);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(error: $"[CreateDonor] : {ex.Message}");
+        }
     }
 
+    /// <summary>
+    /// Atualiza um doador existente.
+    /// </summary>
+    /// <param name="id">O ID do doador a ser atualizado.</param>
+    /// <param name="donorInputModel">Os novos detalhes do doador.</param>
+    /// <returns>O doador atualizado.</returns>
     [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DonorViewModel>> UpdateDonor(int id, [FromBody] UpdateDonorInputModel donorInputModel)
     {
-        var donor = await _dbContext.Donors.SingleOrDefaultAsync(d => d.Id == donorInputModel.Id);
-
-        if (donor == null)
+        try
         {
-            return NotFound();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            return Ok(await _donorService.UpdateDonor(id, donorInputModel));
         }
-
-        donor.Update(donorInputModel.FullName, donorInputModel.Gender, donorInputModel.Weight, donorInputModel.Address);
-
-        _dbContext.Donors.Update(donor);
-
-        await _dbContext.SaveChangesAsync();
-
-        return Ok(donor);
+        catch (Exception ex)
+        {
+            return BadRequest(error: $"[UpdateDonor] : {ex.Message}");
+        }
     }
 
+    /// <summary>
+    /// Desativa um doador pelo ID.
+    /// </summary>
+    /// <param name="id">ID do doador a ser desativado.</param>
+    /// <returns>O doador desativado.</returns>
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DonorViewModel>> DeleteDonor(int id)
     {
-        var donor = await _dbContext.Donors.SingleOrDefaultAsync(d => d.Id == id);
-
-        if (donor == null)
+        try
         {
-            return NotFound();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            return Ok(await _donorService.DisableDonor(id));
         }
-
-        donor.DeactivateDonor();
-
-        _dbContext.Donors.Update(donor);
-
-        await _dbContext.SaveChangesAsync();
-
-        return Ok(donor);
+        catch (Exception ex)
+        {
+            return BadRequest(error: $"[DeleteDonor] : {ex.Message}");
+        }
     }
 }

@@ -8,5 +8,4 @@ public class DonationViewModel
     public int DonorId { get; set; }
     public DateTime DonationDate { get; set; }
     public int QuantityMl { get; set; }
-    public Donor Donor { get; set; }
 }

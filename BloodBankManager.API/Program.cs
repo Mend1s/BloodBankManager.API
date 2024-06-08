@@ -1,7 +1,9 @@
-using BloodBankManager.Application.Services;
-using BloodBankManager.Core.Services;
+using BloodBankManager.Application.Services.Implementations;
+using BloodBankManager.Application.Services.Interfaces;
 using BloodBankManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,11 +26,21 @@ builder.Services.AddCors(options =>
         });
 });
 
-
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "API Banco de Sangue", Version = "v1" });
+
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
+
 
 builder.Services.AddScoped<IBloodStorageService, BloodStorageService>();
+builder.Services.AddScoped<IDonationService, DonationService>();
+builder.Services.AddScoped<IDonorService, DonorService>();
 
 builder.Services.AddDbContext<BloodManagementDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("BloodManagement")));
