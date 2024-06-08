@@ -1,6 +1,8 @@
 using BloodBankManager.Application.Services.Implementations;
 using BloodBankManager.Application.Services.Interfaces;
+using BloodBankManager.Application.Validators;
 using BloodBankManager.Infrastructure.Persistence;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -8,11 +10,9 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//builder.Services.AddControllers()
-//                .AddJsonOptions(options => options.JsonSerializerOptions
-//                .Converters.Add(new JsonStringEnumConverter()));
-
-builder.Services.AddControllers().AddJsonOptions(x =>
+builder.Services.AddControllers()
+    .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CreateDonorValidator>())
+    .AddJsonOptions(x =>
    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 builder.Services.AddCors(options =>
